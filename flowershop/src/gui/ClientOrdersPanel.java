@@ -1,96 +1,94 @@
 package gui;
 
-import server.FlowerService;
-import server.BouquetService;
+import client.ServerClient;
 import server.Order;
-import server.OrderService;
-import server.Client;
 
 import javax.swing.*;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.math.BigDecimal;
-import java.sql.Timestamp;
+import java.text.NumberFormat;
 import java.util.List;
 
 public class ClientOrdersPanel extends JPanel {
 
-    private final Client client;
-    private final OrderService orderService = new OrderService();
-    private final FlowerService flowerService = new FlowerService();
-    private final BouquetService bouquetService = new BouquetService();
-    private final DefaultTableModel tableModel = new DefaultTableModel();
+    private final ServerClient serverClient = new ServerClient();
+    private final DefaultTableModel model = new DefaultTableModel(
+            new String[]{"Букет", "Цветы", "Кол-во", "Сумма", "Статус", "Дата заказа"}, 0
+    ) {
+        @Override
+        public boolean isCellEditable(int row, int column) {
+            return false;
+        }
+    };
 
-    private JTable table;
+    private final int clientId;
 
-    public ClientOrdersPanel(Client client) {
-        this.client = client;
+    public ClientOrdersPanel(int clientId) {
+        this.clientId = clientId;
         setLayout(new BorderLayout());
-
-        // Верхняя панель для оформления заказа
-        JPanel orderPanel = new JPanel(new GridLayout(3, 2, 5, 5));
-
-        JComboBox<String> bouquetBox = new JComboBox<>();
-        bouquetService.getAll().forEach(b -> bouquetBox.addItem(b.getName()));
-        orderPanel.add(new JLabel("Выберите букет:"));
-        orderPanel.add(bouquetBox);
-
-        JComboBox<String> flowerBox = new JComboBox<>();
-        flowerService.getAll().forEach(f -> flowerBox.addItem(f.getName()));
-        orderPanel.add(new JLabel("Выберите цветок:"));
-        orderPanel.add(flowerBox);
-
-        JTextField bouquetCountField = new JTextField("0");
-        orderPanel.add(new JLabel("Количество букетов:"));
-        orderPanel.add(bouquetCountField);
-
-        JTextField flowerCountField = new JTextField("0");
-        orderPanel.add(new JLabel("Количество цветов:"));
-        orderPanel.add(flowerCountField);
-
-        JButton orderButton = new JButton("Сделать заказ");
-        orderButton.addActionListener(e -> {
-            try {
-                int bouquetCount = Integer.parseInt(bouquetCountField.getText());
-                int flowerCount = Integer.parseInt(flowerCountField.getText());
-                Integer bouquetId = bouquetCount > 0 ? bouquetService.getByName((String) bouquetBox.getSelectedItem()).getId() : null;
-                Integer flowerId = flowerCount > 0 ? flowerService.getByName((String) flowerBox.getSelectedItem()).getId() : null;
-                BigDecimal totalPrice = BigDecimal.ZERO;
-                if (bouquetId != null) totalPrice = totalPrice.add(bouquetService.getById(bouquetId).getPrice().multiply(BigDecimal.valueOf(bouquetCount)));
-                if (flowerId != null) totalPrice = totalPrice.add(flowerService.getById(flowerId).getPrice().multiply(BigDecimal.valueOf(flowerCount)));
-
-                orderService.add(client.getId(), bouquetId, flowerId, bouquetCount, flowerCount, 1, null, totalPrice, new Timestamp(System.currentTimeMillis()));
-                JOptionPane.showMessageDialog(this, "Заказ оформлен!");
-                refreshTable();
-            } catch (Exception ex) {
-                JOptionPane.showMessageDialog(this, "Ошибка при оформлении заказа: " + ex.getMessage());
+        JTable table = new JTable(model);
+        table.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        
+        // Форматирование суммы
+        DefaultTableCellRenderer priceRenderer = new DefaultTableCellRenderer() {
+            private NumberFormat format = NumberFormat.getNumberInstance();
+            {
+                format.setMinimumFractionDigits(2);
+                format.setMaximumFractionDigits(2);
             }
-        });
+            @Override
+            public Component getTableCellRendererComponent(JTable table, Object value,
+                    boolean isSelected, boolean hasFocus, int row, int column) {
+                if (value instanceof BigDecimal) {
+                    value = format.format(((BigDecimal) value).doubleValue());
+                }
+                return super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            }
+        };
+        table.getColumnModel().getColumn(3).setCellRenderer(priceRenderer);
+        
+        refresh();
 
-        add(orderPanel, BorderLayout.NORTH);
-        add(orderButton, BorderLayout.CENTER);
+        JButton refreshButton = new JButton("Обновить");
+        refreshButton.addActionListener(e -> refresh());
 
-        // Таблица заказов
-        table = new JTable(tableModel);
-        add(new JScrollPane(table), BorderLayout.SOUTH);
-
-        refreshTable();
+        add(new JScrollPane(table), BorderLayout.CENTER);
+        add(refreshButton, BorderLayout.SOUTH);
     }
 
-    private void refreshTable() {
-        tableModel.setRowCount(0);
-        tableModel.setColumnIdentifiers(new String[]{"ID", "Букет", "Цветок", "Кол-во букетов", "Кол-во цветов", "Статус", "Цена"});
-        List<Order> orders = orderService.getAllByClient(client.getId());
-        for (Order o : orders) {
-            tableModel.addRow(new Object[]{
-                    o.getId(),
-                    o.getBouquetName(),
-                    o.getFlowerName(),
-                    o.getBouquetCount(),
-                    o.getFlowerCount(),
-                    o.getStatusName(),
-                    o.getTotalPrice()
-            });
+    public void refresh() {
+        model.setRowCount(0);
+        try {
+            List<Order> orders = serverClient.getOrdersByClient(clientId);
+            for (Order o : orders) {
+                String itemName = "";
+                int count = 0;
+                
+                if (o.getBouquetId() != null && o.getBouquetCount() > 0) {
+                    itemName = o.getBouquetName() != null ? o.getBouquetName() : "Букет";
+                    count = o.getBouquetCount();
+                } else if (o.getFlowerId() != null && o.getFlowerCount() > 0) {
+                    itemName = o.getFlowerName() != null ? o.getFlowerName() : "Цветок";
+                    count = o.getFlowerCount();
+                }
+                
+                String orderDateStr = o.getOrderDate() != null ? 
+                    o.getOrderDate().toString().substring(0, 16) : "";
+                
+                model.addRow(new Object[]{
+                        o.getBouquetId() != null ? itemName : "-",
+                        o.getFlowerId() != null ? itemName : "-",
+                        count > 0 ? count : "-",
+                        o.getTotalPrice() != null ? o.getTotalPrice() : BigDecimal.ZERO,
+                        o.getStatusName() != null ? o.getStatusName() : "Неизвестно",
+                        orderDateStr
+                });
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Ошибка при загрузке заказов: " + e.getMessage(), "Ошибка", JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
         }
     }
 }

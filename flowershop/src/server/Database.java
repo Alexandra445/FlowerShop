@@ -9,6 +9,15 @@ public class Database {
     private static final String USER = "postgres";
     private static final String PASSWORD = "postgres123";
 
+    // Статический блок для загрузки драйвера PostgreSQL
+    static {
+        try {
+            Class.forName("org.postgresql.Driver");
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException("PostgreSQL Driver not found!", e);
+        }
+    }
+
     // Получить соединение
     public static Connection getConnection() throws SQLException {
         return DriverManager.getConnection(URL, USER, PASSWORD);

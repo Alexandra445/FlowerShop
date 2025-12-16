@@ -3,6 +3,7 @@ package server;
 import java.math.BigDecimal;
 
 public class Flower {
+
     private int id;
     private String name;
     private int typeId;
@@ -17,16 +18,33 @@ public class Flower {
         this.price = price;
     }
 
-    // Геттеры и сеттеры
-    public int getId() { return id; }
-    public String getName() { return name; }
-    public int getTypeId() { return typeId; }
-    public int getQuantity() { return quantity; }
-    public BigDecimal getPrice() { return price; }
+    // getters
+    public int getId() {
+        return id;
+    }
 
-    public void setQuantity(int quantity) { this.quantity = quantity; }
+    public String getName() {
+        return name;
+    }
 
-    public String getTypeName() {
-        return new FlowerTypeService().getTypeName(typeId);
+    public int getTypeId() {
+        return typeId;
+    }
+
+    public int getQuantity() {
+        return quantity;
+    }
+
+    public BigDecimal getPrice() {
+        return price;
+    }
+
+    // setters
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
+    }
+
+    public void setPrice(BigDecimal price) {
+        this.price = price;
     }
 }
