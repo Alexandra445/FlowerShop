@@ -1,7 +1,7 @@
 package gui;
 
+import client.ServerClient;
 import server.Client;
-import server.ClientService;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -10,7 +10,7 @@ import java.util.List;
 
 public class ClientPanel extends JPanel {
 
-    private ClientService clientService = new ClientService();
+    private final ServerClient serverClient = new ServerClient();
     private DefaultTableModel tableModel;
     private JTable table;
 
@@ -36,7 +36,7 @@ public class ClientPanel extends JPanel {
 
     private void refreshTable() {
         tableModel.setRowCount(0);
-        List<Client> clients = clientService.getAll();
+        List<Client> clients = serverClient.getAllClients();
         for (Client c : clients) {
             tableModel.addRow(new Object[]{c.getId(), c.getFullName(), c.getPhone(), c.getLogin(), c.getPassword()});
         }
@@ -50,7 +50,7 @@ public class ClientPanel extends JPanel {
         String login = JOptionPane.showInputDialog(this, "Логин:");
         String password = JOptionPane.showInputDialog(this, "Пароль:");
 
-        if (clientService.add(fullName, phone, login, password)) {
+        if (serverClient.addClient(fullName, phone, login, password)) {
             JOptionPane.showMessageDialog(this, "Клиент добавлен!");
             refreshTable();
         } else {

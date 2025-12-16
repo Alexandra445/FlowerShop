@@ -1,7 +1,7 @@
 package gui;
 
+import client.ServerClient;
 import server.Order;
-import server.OrderService;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
@@ -10,7 +10,7 @@ import java.util.List;
 
 public class OrderPanel extends JPanel {
 
-    private OrderService orderService = new OrderService();
+    private final ServerClient serverClient = new ServerClient();
     private DefaultTableModel tableModel;
     private JTable table;
 
@@ -32,7 +32,7 @@ public class OrderPanel extends JPanel {
 
     private void refreshTable() {
         tableModel.setRowCount(0);
-        List<Order> orders = orderService.getAll();
+        List<Order> orders = serverClient.getAllOrders();
         for (Order o : orders) {
             tableModel.addRow(new Object[]{
                     o.getId(),

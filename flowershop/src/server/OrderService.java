@@ -48,11 +48,13 @@ public class OrderService {
         List<Order> list = new ArrayList<>();
         String sql = "SELECT o.id, o.client_id, o.bouquet_id, o.flower_id, o.status_id, o.order_date, " +
                 "o.delivery_time, o.bouquet_count, o.flower_count, o.administrator_id, o.total_price, " +
-                "b.name AS bouquet_name, f.name AS flower_name, s.name AS status_name " +
+                "b.name AS bouquet_name, f.name AS flower_name, s.name AS status_name, c.full_name AS client_name, " +
+                "c.phone AS client_phone " +
                 "FROM orders o " +
                 "LEFT JOIN bouquets b ON o.bouquet_id = b.id " +
                 "LEFT JOIN flowers f ON o.flower_id = f.id " +
-                "LEFT JOIN order_status s ON o.status_id = s.id " +
+                "LEFT JOIN order_statuses s ON o.status_id = s.id " +
+                "LEFT JOIN clients c ON o.client_id = c.id " +
                 "ORDER BY o.id";
         try (Connection c = Database.getConnection();
              PreparedStatement ps = c.prepareStatement(sql);
@@ -63,16 +65,18 @@ public class OrderService {
                         rs.getInt("client_id"),
                         (Integer) rs.getObject("bouquet_id"),
                         (Integer) rs.getObject("flower_id"),
-                        rs.getInt("status_id"),
-                        rs.getTimestamp("order_date"),
-                        rs.getTimestamp("delivery_time"),
                         rs.getInt("bouquet_count"),
                         rs.getInt("flower_count"),
+                        rs.getInt("status_id"),
                         (Integer) rs.getObject("administrator_id"),
                         rs.getBigDecimal("total_price"),
+                        rs.getTimestamp("order_date"),
+                        rs.getTimestamp("delivery_time"),
                         rs.getString("bouquet_name"),
                         rs.getString("flower_name"),
-                        rs.getString("status_name")
+                        rs.getString("status_name"),
+                        rs.getString("client_name"),
+                        rs.getString("client_phone")
                 );
                 list.add(o);
             }
@@ -87,11 +91,13 @@ public class OrderService {
         List<Order> list = new ArrayList<>();
         String sql = "SELECT o.id, o.client_id, o.bouquet_id, o.flower_id, o.status_id, o.order_date, " +
                 "o.delivery_time, o.bouquet_count, o.flower_count, o.administrator_id, o.total_price, " +
-                "b.name AS bouquet_name, f.name AS flower_name, s.name AS status_name " +
+                "b.name AS bouquet_name, f.name AS flower_name, s.name AS status_name, c.full_name AS client_name, " +
+                "c.phone AS client_phone " +
                 "FROM orders o " +
                 "LEFT JOIN bouquets b ON o.bouquet_id = b.id " +
                 "LEFT JOIN flowers f ON o.flower_id = f.id " +
-                "LEFT JOIN order_status s ON o.status_id = s.id " +
+                "LEFT JOIN order_statuses s ON o.status_id = s.id " +
+                "LEFT JOIN clients c ON o.client_id = c.id " +
                 "WHERE o.client_id = ? ORDER BY o.id";
         try (Connection c = Database.getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
@@ -103,16 +109,18 @@ public class OrderService {
                         rs.getInt("client_id"),
                         (Integer) rs.getObject("bouquet_id"),
                         (Integer) rs.getObject("flower_id"),
-                        rs.getInt("status_id"),
-                        rs.getTimestamp("order_date"),
-                        rs.getTimestamp("delivery_time"),
                         rs.getInt("bouquet_count"),
                         rs.getInt("flower_count"),
+                        rs.getInt("status_id"),
                         (Integer) rs.getObject("administrator_id"),
                         rs.getBigDecimal("total_price"),
+                        rs.getTimestamp("order_date"),
+                        rs.getTimestamp("delivery_time"),
                         rs.getString("bouquet_name"),
                         rs.getString("flower_name"),
-                        rs.getString("status_name")
+                        rs.getString("status_name"),
+                        rs.getString("client_name"),
+                        rs.getString("client_phone")
                 );
                 list.add(o);
             }
