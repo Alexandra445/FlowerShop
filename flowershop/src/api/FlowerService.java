@@ -34,7 +34,6 @@ public class FlowerService {
     }
 
     public boolean add(String name, int typeId, int quantity, BigDecimal price) {
-        // Добавляем remaining_quantity и price_per_unit (обычно равно price)
         String sql = "INSERT INTO flowers (name, type_id, quantity, price, remaining_quantity, price_per_unit) VALUES (?, ?, ?, ?, ?, ?)";
         try (Connection c = Database.getConnection();
              PreparedStatement ps = c.prepareStatement(sql)) {
@@ -43,8 +42,8 @@ public class FlowerService {
             ps.setInt(2, typeId);
             ps.setInt(3, quantity);
             ps.setBigDecimal(4, price);
-            ps.setInt(5, quantity); // remaining_quantity = quantity при создании
-            ps.setBigDecimal(6, price); // price_per_unit = price
+            ps.setInt(5, quantity);
+            ps.setBigDecimal(6, price);
             return ps.executeUpdate() == 1;
 
         } catch (SQLException e) {
@@ -71,9 +70,6 @@ public class FlowerService {
         }
     }
 
-    /**
-     * Проверяет, используется ли цветок в заказах
-     */
     public boolean isUsedInOrders(int id) {
         String sql = "SELECT COUNT(*) FROM orders WHERE flower_id = ?";
         try (Connection c = Database.getConnection();
@@ -90,14 +86,7 @@ public class FlowerService {
         return false;
     }
 
-    /**
-     * Удаляет цветок. Возвращает строку с результатом:
-     * - "success" - успешно удален
-     * - "used_in_orders" - используется в заказах, нельзя удалить
-     * - "error" - ошибка при удалении
-     */
     public String delete(int id) {
-        // Проверяем, используется ли цветок в заказах
         if (isUsedInOrders(id)) {
             return "used_in_orders";
         }
@@ -115,7 +104,6 @@ public class FlowerService {
 
         } catch (SQLException e) {
             e.printStackTrace();
-            // Проверяем, это ошибка внешнего ключа или другая
             if (e.getMessage() != null && e.getMessage().contains("нарушает ограничение внешнего ключа")) {
                 return "used_in_orders";
             }
@@ -138,5 +126,48 @@ public class FlowerService {
             return false;
         }
     }
-}
 
+    public Flower getById(int id) {
+        String sql = "SELECT id, name, type_id, quantity, price FROM flowers WHERE id = ?";
+        try (Connection c = Database.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return new Flower(
+                            rs.getInt("id"),
+                            rs.getString("name"),
+                            rs.getInt("type_id"),
+                            rs.getInt("quantity"),
+                            rs.getBigDecimal("price")
+                    );
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public Flower getByName(String name) {
+        String sql = "SELECT id, name, type_id, quantity, price FROM flowers WHERE name = ?";
+        try (Connection c = Database.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, name);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return new Flower(
+                            rs.getInt("id"),
+                            rs.getString("name"),
+                            rs.getInt("type_id"),
+                            rs.getInt("quantity"),
+                            rs.getBigDecimal("price")
+                    );
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+}

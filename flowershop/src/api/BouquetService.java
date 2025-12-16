@@ -65,9 +65,6 @@ public class BouquetService {
         }
     }
 
-    /**
-     * Проверяет, используется ли букет в заказах
-     */
     public boolean isUsedInOrders(int id) {
         String sql = "SELECT COUNT(*) FROM orders WHERE bouquet_id = ?";
         try (Connection c = Database.getConnection();
@@ -84,14 +81,7 @@ public class BouquetService {
         return false;
     }
 
-    /**
-     * Удаляет букет. Возвращает строку с результатом:
-     * - "success" - успешно удален
-     * - "used_in_orders" - используется в заказах, нельзя удалить
-     * - "error" - ошибка при удалении
-     */
     public String delete(int id) {
-        // Проверяем, используется ли букет в заказах
         if (isUsedInOrders(id)) {
             return "used_in_orders";
         }
@@ -109,12 +99,52 @@ public class BouquetService {
 
         } catch (SQLException e) {
             e.printStackTrace();
-            // Проверяем, это ошибка внешнего ключа или другая
             if (e.getMessage() != null && e.getMessage().contains("нарушает ограничение внешнего ключа")) {
                 return "used_in_orders";
             }
             return "error";
         }
     }
-}
 
+    public Bouquet getById(int id) {
+        String sql = "SELECT id, name, description, price FROM bouquets WHERE id = ?";
+        try (Connection c = Database.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setInt(1, id);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return new Bouquet(
+                            rs.getInt("id"),
+                            rs.getString("name"),
+                            rs.getString("description"),
+                            rs.getBigDecimal("price")
+                    );
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public Bouquet getByName(String name) {
+        String sql = "SELECT id, name, description, price FROM bouquets WHERE name = ?";
+        try (Connection c = Database.getConnection();
+             PreparedStatement ps = c.prepareStatement(sql)) {
+            ps.setString(1, name);
+            try (ResultSet rs = ps.executeQuery()) {
+                if (rs.next()) {
+                    return new Bouquet(
+                            rs.getInt("id"),
+                            rs.getString("name"),
+                            rs.getString("description"),
+                            rs.getBigDecimal("price")
+                    );
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+}

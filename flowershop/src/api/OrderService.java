@@ -18,7 +18,7 @@ public class OrderService {
                        int flowerCount, int statusId, Integer adminId, BigDecimal totalPrice,
                        Timestamp deliveryTime) {
         // КРИТИЧЕСКИ ВАЖНО: Используем порядок колонок, который соответствует SELECT запросу
-        // В SELECT: o.id, o.client_id, o.bouquet_id, o.flower_id, o.status_id, o.order_date, 
+        // В SELECT: o.id, o.client_id, o.bouquet_id, o.flower_id, o.status_id, o.order_date,
         // o.delivery_time, o.bouquet_count, o.flower_count, o.administrator_id, o.total_price
         // В INSERT (без id): client_id, bouquet_id, flower_id, status_id, order_date, delivery_time,
         // bouquet_count, flower_count, administrator_id, total_price
@@ -33,7 +33,7 @@ public class OrderService {
                 System.err.println("Ошибка: bouquet_count и flower_count оба <= 0");
                 return false;
             }
-            
+
             // Проверка логической согласованности: если указан ID, то количество должно быть > 0
             if (bouquetId != null && bouquetCount <= 0) {
                 System.err.println("Ошибка: bouquet_id указан, но bouquet_count <= 0");
@@ -43,29 +43,29 @@ public class OrderService {
                 System.err.println("Ошибка: flower_id указан, но flower_count <= 0");
                 return false;
             }
-            
+
             // Убеждаемся, что значения правильные (не отрицательные и не null)
             int finalBouquetCount = bouquetCount < 0 ? 0 : bouquetCount;
             int finalFlowerCount = flowerCount < 0 ? 0 : flowerCount;
-            
+
             // Дополнительная проверка для CHECK constraint
             if (finalBouquetCount <= 0 && finalFlowerCount <= 0) {
                 System.err.println("Ошибка: после нормализации bouquet_count и flower_count оба <= 0");
                 return false;
             }
-            
+
             // Логирование для отладки
             System.out.println("DEBUG: Установка параметров заказа:");
             System.out.println("  Входные параметры: bouquetCount=" + bouquetCount + ", flowerCount=" + flowerCount);
             System.out.println("  Нормализованные: finalBouquetCount=" + finalBouquetCount + ", finalFlowerCount=" + finalFlowerCount);
             System.out.println("  bouquetId=" + bouquetId + ", flowerId=" + flowerId);
-            
+
             // Устанавливаем параметры в правильном порядке согласно SQL:
-            // INSERT INTO orders (client_id, bouquet_id, flower_id, status_id, order_date, delivery_time, 
+            // INSERT INTO orders (client_id, bouquet_id, flower_id, status_id, order_date, delivery_time,
             //                     bouquet_count, flower_count, administrator_id, total_price)
             ps.setInt(1, clientId);
             System.out.println("  Параметр 1 (client_id) = " + clientId);
-            
+
             if (bouquetId != null) {
                 ps.setInt(2, bouquetId);
                 System.out.println("  Параметр 2 (bouquet_id) = " + bouquetId);
@@ -73,7 +73,7 @@ public class OrderService {
                 ps.setNull(2, Types.INTEGER);
                 System.out.println("  Параметр 2 (bouquet_id) = NULL");
             }
-            
+
             if (flowerId != null) {
                 ps.setInt(3, flowerId);
                 System.out.println("  Параметр 3 (flower_id) = " + flowerId);
@@ -81,17 +81,17 @@ public class OrderService {
                 ps.setNull(3, Types.INTEGER);
                 System.out.println("  Параметр 3 (flower_id) = NULL");
             }
-            
+
             ps.setInt(4, statusId);
             System.out.println("  Параметр 4 (status_id) = " + statusId);
-            
+
             Timestamp orderDate = new Timestamp(System.currentTimeMillis());
             ps.setTimestamp(5, orderDate);
             System.out.println("  Параметр 5 (order_date) = " + orderDate);
-            
+
             ps.setTimestamp(6, deliveryTime);
             System.out.println("  Параметр 6 (delivery_time) = " + deliveryTime);
-            
+
             // ВАЖНО: CHECK constraint требует, чтобы хотя бы одно было > 0
             // Убеждаемся, что передаем 0, а не null (оба поля NOT NULL)
             // Если заказываем букет, bouquet_count > 0, flower_count = 0
@@ -103,7 +103,7 @@ public class OrderService {
             }
             ps.setInt(7, finalBouquetCount);
             System.out.println("  Параметр 7 (bouquet_count) = " + finalBouquetCount + " (тип: INTEGER, setInt)");
-            
+
             if (finalFlowerCount < 0) {
                 System.err.println("ОШИБКА: finalFlowerCount < 0: " + finalFlowerCount);
                 return false;
@@ -112,7 +112,7 @@ public class OrderService {
             // Это должно гарантировать, что значение не станет null
             ps.setObject(8, Integer.valueOf(finalFlowerCount), Types.INTEGER);
             System.out.println("  Параметр 8 (flower_count) = " + finalFlowerCount + " (тип: INTEGER, setObject с Types.INTEGER)");
-            
+
             // ВАЖНО: Порядок должен соответствовать SQL: administrator_id, затем total_price
             if (adminId != null) {
                 ps.setInt(9, adminId);
@@ -121,7 +121,7 @@ public class OrderService {
                 ps.setNull(9, Types.INTEGER);
                 System.out.println("  Параметр 9 (administrator_id) = NULL");
             }
-            
+
             ps.setBigDecimal(10, totalPrice);
             System.out.println("  Параметр 10 (total_price) = " + totalPrice);
 
@@ -133,10 +133,10 @@ public class OrderService {
                 int insertedBouquetCount = rs.getInt("bouquet_count");
                 int insertedFlowerCount = rs.getInt("flower_count");
                 int insertedFlowerId = rs.getInt("flower_id");
-                System.out.println("  ВСТАВЛЕНО В БД: id=" + insertedId + 
-                                 ", bouquet_count=" + insertedBouquetCount + 
-                                 ", flower_count=" + insertedFlowerCount +
-                                 ", flower_id=" + insertedFlowerId);
+                System.out.println("  ВСТАВЛЕНО В БД: id=" + insertedId +
+                        ", bouquet_count=" + insertedBouquetCount +
+                        ", flower_count=" + insertedFlowerCount +
+                        ", flower_id=" + insertedFlowerId);
                 added = true;
             }
 
@@ -148,9 +148,9 @@ public class OrderService {
         } catch (SQLException e) {
             e.printStackTrace();
             System.err.println("Ошибка при добавлении заказа: " + e.getMessage());
-            System.err.println("Параметры: clientId=" + clientId + ", bouquetId=" + bouquetId + 
-                             ", flowerId=" + flowerId + ", bouquetCount=" + bouquetCount + 
-                             ", flowerCount=" + flowerCount);
+            System.err.println("Параметры: clientId=" + clientId + ", bouquetId=" + bouquetId +
+                    ", flowerId=" + flowerId + ", bouquetCount=" + bouquetCount +
+                    ", flowerCount=" + flowerCount);
             return false;
         }
     }
@@ -276,4 +276,3 @@ public class OrderService {
         return -1;
     }
 }
-
